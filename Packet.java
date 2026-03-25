@@ -1,4 +1,4 @@
-
+package lab3;
 
 public class Packet {
     public int connectionID;
@@ -8,7 +8,7 @@ public class Packet {
     public String payload;
     public int last;
 
-    Packet(int connectionID, int sequenceNumber, String messageType, int payloadSize, String payload, int last) {
+    public Packet(int connectionID, int sequenceNumber, String messageType, int payloadSize, String payload, int last) {
         this.connectionID = connectionID;
         this.sequenceNumber = sequenceNumber;
         this.messageType = messageType;
