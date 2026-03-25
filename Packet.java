@@ -8,7 +8,7 @@ public class Packet {
     public String payload;
     public int last;
 
-    public Packet(int connectionID, int sequenceNumber, String messageType, int payloadSize, String payload, int last) {
+    Packet(int connectionID, int sequenceNumber, String messageType, int payloadSize, String payload, int last) {
         this.connectionID = connectionID;
         this.sequenceNumber = sequenceNumber;
         this.messageType = messageType;
