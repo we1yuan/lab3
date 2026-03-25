@@ -1,4 +1,4 @@
-package lab3;
+
 
 import java.io.File;
 import java.io.FileWriter;
