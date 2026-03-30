@@ -18,7 +18,7 @@ public class Server {
 
         // local ip address
 //       InetAddress ipAddress = InetAddress.getLocalHost();
-InetAddress ipAddress = java.net.InetAddress.getByName("10.0.0.1");
+InetAddress ipAddress = java.net.InetAddress.getByName("10.0.0.2");
 
         // Server flags
         boolean sending = false;
