@@ -101,7 +101,7 @@ public class Server {
                         }
                     }
                 } 
-*/               
+ */              
                     
                 if (recievedPacket.messageType.equals("ACK")) {
     if (recievedPacket.connectionID == connectionID &&
@@ -121,7 +121,7 @@ public class Server {
     } else {
         System.out.println("Server recieved an invalid ACK packet, resending last packet.");
     }
-}
+}}
                     catch (Exception e) {
                     // timeout
                     if (segmentToSend == lastSegement) {
