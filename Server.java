@@ -83,7 +83,7 @@ public class Server {
                             }
                         }
                     }
-
+/*
                     // if message is a acknowledgement, handle it
                     if (recievedPacket.messageType.equals("ACK")) {
                         if (recievedPacket.connectionID == connectionID
@@ -100,7 +100,29 @@ public class Server {
                             System.out.println("Server recieved an invalid ACK packet, resending last packet.");
                         }
                     }
-                } catch (Exception e) {
+                } 
+*/               
+                    
+                if (recievedPacket.messageType.equals("ACK")) {
+    if (recievedPacket.connectionID == connectionID &&
+        recievedPacket.sequenceNumber == sequenceNumber) {
+
+        System.out.println("Server recieved a valid ACK packet.");
+
+        if (segmentToSend == lastSegement) {
+            quiting = true;   // 最后一个 DATA 已被确认
+            break;
+        }
+
+        sequenceNumber = (sequenceNumber + 1) % 2;
+        segmentToSend++;
+    } else if (recievedPacket.connectionID != connectionID) {
+        invalidID = true;
+    } else {
+        System.out.println("Server recieved an invalid ACK packet, resending last packet.");
+    }
+}
+                    catch (Exception e) {
                     // timeout
                     if (segmentToSend == lastSegement) {
                         // last packet has been sent already, terminate connection
