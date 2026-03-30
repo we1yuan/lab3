@@ -17,7 +17,9 @@ public class Server {
         byte[] buffer = new byte[65535];
 
         // local ip address
-        InetAddress ipAddress = InetAddress.getLocalHost();
+//       InetAddress ipAddress = InetAddress.getLocalHost();
+InetAddress clientAddress = null;
+int clientPort = -1;
 
         // Server flags
         boolean sending = false;
@@ -54,6 +56,10 @@ public class Server {
                 // receive the datagram
                 try {
                     socket.receive(datagram);
+
+clientAddress = datagram.getAddress();
+clientPort = datagram.getPort();
+
 
                     // convert bytes to received packet
                     Packet recievedPacket = Packet.stringToPacket(Packet.byteToString(buffer));
@@ -190,7 +196,8 @@ long transferTime = endTime - startTime;
                 buffer = Packet.packetToString(packet).getBytes();
 
                 // create datagram
-                DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, 8081);
+//     DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, 8081);
+DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, clientAddress, clientPort);
 
                 if (packet.messageType.equals("DATA") && segmentToSend == 0 && startTime == 0) {
                     startTime = System.currentTimeMillis();
