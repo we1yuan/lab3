@@ -26,6 +26,7 @@ public class Server {
 
         // File data
         String[] fileData = new String[100];
+        fileData[0] = "";
         int segmentToSend = 0;
         int lastSegement = 0;
 
@@ -83,7 +84,7 @@ public class Server {
                             }
                         }
                     }
-
+/*
                     // if message is a acknowledgement, handle it
                     if (recievedPacket.messageType.equals("ACK")) {
                         if (recievedPacket.connectionID == connectionID
@@ -101,9 +102,9 @@ public class Server {
                         }
                     }
                 } 
-              
+*/              
                     
-/*                 if (recievedPacket.messageType.equals("ACK")) {
+                 if (recievedPacket.messageType.equals("ACK")) {
     if (recievedPacket.connectionID == connectionID &&
         recievedPacket.sequenceNumber == sequenceNumber) {
 
@@ -121,7 +122,7 @@ public class Server {
     } else {
         System.out.println("Server recieved an invalid ACK packet, resending last packet.");
     }
-}} */
+}} 
                     catch (Exception e) {
                     // timeout
                     if (segmentToSend == lastSegement) {
@@ -147,7 +148,7 @@ public class Server {
                 if (invalidID) {
                     packet.payload = "ERROR: Invalid connection ID.";
                     invalidID = false;
-                } else if (!fileData[0].equals("")) {
+                } else if (fileData[0] != null && !fileData[0].isEmpty()) {
                     // send ERROR otherwise
                     packet.messageType = "DATA";
                     packet.payload = fileData[segmentToSend];
