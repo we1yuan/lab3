@@ -141,31 +141,29 @@ if (recievedPacket.messageType.equals("ACK")) {
 }
                 } 
                     catch (Exception e) {
-                    // timeout
-                    if (segmentToSend == lastSegement) {
-                        // last packet has been sent already, terminate connection
+    // timeout
+    if (fileData[0] != null && !fileData[0].isEmpty()) {
+        retransmissions++;
+    }
 
-                            endTime = System.currentTimeMillis();
-                            System.out.println("Transfer time(ms): " + (endTime - startTime));
-                            System.out.println("Retransmissions: " + retransmissions);
+    System.out.println("Server timed out, resending last packet.");
 
-        
-long transferTime = endTime - startTime;
+    if (segmentToSend == lastSegement) {
+        // last packet has been sent already, terminate connection
+        endTime = System.currentTimeMillis();
+        System.out.println("Transfer time(ms): " + (endTime - startTime));
+        System.out.println("Retransmissions: " + retransmissions);
+        long transferTime = endTime - startTime;
         if (transferTime > 0) {
-            double throughput = (fileSize * 1000.0) / transferTime;   // Bytes/s
+            double throughput = (fileSize * 1000.0) / transferTime; // Bytes/s
             System.out.println("Throughput(Bytes/s): " + throughput);
             System.out.println("Throughput(KB/s): " + (throughput / 1024.0));
         } else {
             System.out.println("Throughput(Bytes/s): 0");
         }
-                        
-                        quiting = true;
-                    } else {
-                        // else, resend last packet
-                        retransmissions++;
-                        System.out.println("Server timed out, resending last packet.");
-                    }
-                }
+        quiting = true;
+    }
+}
 
                 // swap mode
                 sending = true;
