@@ -137,6 +137,11 @@ if (recievedPacket.messageType.equals("ACK")) {
                     // timeout
                     if (segmentToSend == lastSegement) {
                         // last packet has been sent already, terminate connection
+
+                            endTime = System.currentTimeMillis();
+                            System.out.println("Transfer time(ms): " + (endTime - startTime));
+                            System.out.println("Retransmissions: " + retransmissions);
+                        
                         quiting = true;
                     } else {
                         // else, resend last packet
