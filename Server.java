@@ -146,7 +146,7 @@ if (recievedPacket.messageType.equals("ACK")) {
                             System.out.println("Retransmissions: " + retransmissions);
 
         
-
+long transferTime = endTime - startTime;
         if (transferTime > 0) {
             double throughput = (fileSize * 1000.0) / transferTime;   // Bytes/s
             System.out.println("Throughput(Bytes/s): " + throughput);
