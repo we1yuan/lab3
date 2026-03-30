@@ -194,7 +194,7 @@ long transferTime = endTime - startTime;
                 buffer = Packet.packetToString(packet).getBytes();
 
                 // create datagram
-     DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, 8080);
+     DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, 8081);
 // DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, clientPort);
 
                 if (packet.messageType.equals("DATA") && segmentToSend == 0 && startTime == 0) {
