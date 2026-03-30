@@ -20,7 +20,7 @@ public class Client {
 
         // socket to send and recieve datagrams
         DatagramSocket socket = new DatagramSocket(8081);
-        socket.setSoTimeout(1000);
+        socket.setSoTimeout(20000);
 
         // server port number
         System.out.println("Enter the Server's UDP Port:");
