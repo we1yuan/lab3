@@ -11,7 +11,7 @@ public class Server {
     public static void main(String[] args) throws IOException {
         // socket to send and recieve datagrams
         DatagramSocket socket = new DatagramSocket(8080);
-        socket.setSoTimeout(20000);
+        socket.setSoTimeout(2000);
 
         // recieve buffer
         byte[] buffer = new byte[65535];
