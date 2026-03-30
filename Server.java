@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class Server {
 
             Packet incomingPacket;
             try {
-                incomingPacket = Packet.stringToPacket(Packet.byteToString(incomingDatagram.getData()));
+                incomingPacket = Packet.stringToPacket(datagramToString(incomingDatagram));
             } catch (Exception e) {
                 System.out.println("Server received a malformed packet. Packet discarded.");
                 continue;
@@ -119,7 +120,6 @@ public class Server {
             int totalDataPacketsSent = 0;
             long startTime = 0;
             long endTime = 0;
-            Packet lastDataPacketSent = null;
 
             socket.setSoTimeout(socketTimeoutMs);
 
@@ -137,7 +137,6 @@ public class Server {
                 }
 
                 sendPacket(socket, dataPacket, senderAddress, senderPort);
-                lastDataPacketSent = dataPacket;
                 totalDataPacketsSent++;
 
                 if (dataPacket.last == 0) {
@@ -147,10 +146,6 @@ public class Server {
                     System.out.println("Server sent the last DATA packet.");
                 }
 
-                boolean resendCurrentSegment = false;
-                boolean advanceToNextSegment = false;
-                boolean transferCompleted = false;
-
                 while (true) {
                     try {
                         byte[] ackBuffer = new byte[BUFFER_SIZE];
@@ -159,7 +154,7 @@ public class Server {
 
                         Packet receivedPacket;
                         try {
-                            receivedPacket = Packet.stringToPacket(Packet.byteToString(ackDatagram.getData()));
+                            receivedPacket = Packet.stringToPacket(datagramToString(ackDatagram));
                         } catch (Exception e) {
                             System.out.println("Server received a malformed packet while waiting for ACK. Packet ignored.");
                             continue;
@@ -178,7 +173,6 @@ public class Server {
                             duplicateRequestEvents++;
                             retransmissions++;
                             System.out.println("Server received a duplicate REQUEST packet, resending current DATA packet.");
-                            resendCurrentSegment = true;
                             break;
                         }
 
@@ -196,7 +190,6 @@ public class Server {
                             duplicateAckEvents++;
                             retransmissions++;
                             System.out.println("Server received a duplicate/out-of-order ACK, resending current DATA packet.");
-                            resendCurrentSegment = true;
                             break;
                         }
 
@@ -217,93 +210,40 @@ public class Server {
                                     dataPacket,
                                     endTime);
 
-                            transferCompleted = true;
+                            socket.setSoTimeout(0);
+                            System.out.println("Server kept final transfer state for " + finalStateMs
+                                    + " ms in case a duplicate ACK/REQUEST arrives.");
                             break;
                         }
 
                         sequenceNumber = (sequenceNumber + 1) % 2;
                         segmentToSend++;
-                        advanceToNextSegment = true;
                         break;
                     } catch (SocketTimeoutException e) {
                         timeoutEvents++;
                         retransmissions++;
                         System.out.println("Server timed out after " + socketTimeoutMs
                                 + " ms, resending current DATA packet.");
-                        resendCurrentSegment = true;
                         break;
                     }
                 }
 
-                if (transferCompleted) {
+                if (segmentToSend == lastSegment && endTime != 0) {
                     break;
                 }
-
-                if (advanceToNextSegment) {
-                    continue;
-                }
-
-                if (resendCurrentSegment) {
-                    continue;
-                }
-            }
-
-            socket.setSoTimeout(0);
-            if (lastDataPacketSent != null) {
-                System.out.println("Server kept final transfer state for " + finalStateMs
-                        + " ms in case a duplicate ACK/REQUEST arrives.");
             }
         }
-    }
-
-    private static void printTransferStats(long fileBytes, int segmentCount, int totalDataPacketsSent,
-                                           int retransmissions, int timeoutEvents, int duplicateAckEvents,
-                                           int duplicateRequestEvents, long startTime, long endTime) {
-        long transferTimeMs = Math.max(1, endTime - startTime);
-        double throughputBytesPerSecond = (fileBytes * 1000.0) / transferTimeMs;
-        double throughputKBytesPerSecond = throughputBytesPerSecond / 1024.0;
-
-        System.out.println("Transfer complete.");
-        System.out.println("Transfer time(ms): " + transferTimeMs);
-        System.out.println("Retransmissions: " + retransmissions);
-        System.out.println("Timeout events: " + timeoutEvents);
-        System.out.println("Duplicate ACK events: " + duplicateAckEvents);
-        System.out.println("Duplicate REQUEST events: " + duplicateRequestEvents);
-        System.out.println("File size(bytes): " + fileBytes);
-        System.out.println("Unique DATA segments: " + segmentCount);
-        System.out.println("Total DATA packets sent: " + totalDataPacketsSent);
-        System.out.printf("Approx throughput(bytes/s): %.2f%n", throughputBytesPerSecond);
-        System.out.printf("Approx throughput(KiB/s): %.2f%n", throughputKBytesPerSecond);
-    }
-
-    private static boolean isDuplicateForCompletedTransfer(Packet packet, InetAddress senderAddress,
-                                                           int senderPort, CompletedTransfer completedTransfer) {
-        if (completedTransfer == null) {
-            return false;
-        }
-
-        if (!senderAddress.equals(completedTransfer.clientAddress) || senderPort != completedTransfer.clientPort) {
-            return false;
-        }
-
-        if (packet.connectionID != completedTransfer.connectionID) {
-            return false;
-        }
-
-        if ("ACK".equals(packet.messageType)) {
-            return true;
-        }
-
-        return "REQUEST".equals(packet.messageType)
-                && completedTransfer.fileName.equals(packet.payload)
-                && completedTransfer.payloadSize == packet.payloadSize;
     }
 
     private static void sendPacket(DatagramSocket socket, Packet packet, InetAddress address, int port)
             throws IOException {
-        byte[] buffer = Packet.packetToString(packet).getBytes();
+        byte[] buffer = Packet.packetToString(packet).getBytes(StandardCharsets.ISO_8859_1);
         DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, address, port);
         socket.send(datagram);
+    }
+
+    private static String datagramToString(DatagramPacket datagram) {
+        return new String(datagram.getData(), 0, datagram.getLength(), StandardCharsets.ISO_8859_1);
     }
 
     private static List<String> splitFileIntoSegments(byte[] fileBytes, int payloadSize) {
@@ -316,11 +256,48 @@ public class Server {
 
         for (int i = 0; i < fileBytes.length; i += payloadSize) {
             int length = Math.min(payloadSize, fileBytes.length - i);
-            byte[] segmentBytes = new byte[length];
-            System.arraycopy(fileBytes, i, segmentBytes, 0, length);
-            segments.add(Packet.byteToString(segmentBytes));
+            segments.add(new String(fileBytes, i, length, StandardCharsets.ISO_8859_1));
         }
 
         return segments;
+    }
+
+    private static boolean isDuplicateForCompletedTransfer(Packet packet, InetAddress address, int port,
+                                                           CompletedTransfer completedTransfer) {
+        if (completedTransfer == null) {
+            return false;
+        }
+
+        if (!address.equals(completedTransfer.clientAddress) || port != completedTransfer.clientPort) {
+            return false;
+        }
+
+        if (packet.connectionID != completedTransfer.connectionID) {
+            return false;
+        }
+
+        if ("ACK".equals(packet.messageType) || "REQUEST".equals(packet.messageType)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void printTransferStats(long fileBytes, int segmentCount, int totalDataPacketsSent,
+                                           int retransmissions, int timeoutEvents, int duplicateAckEvents,
+                                           int duplicateRequestEvents, long startTime, long endTime) {
+        long transferTimeMs = Math.max(1, endTime - startTime);
+        double throughputBps = (fileBytes * 1000.0) / transferTimeMs;
+
+        System.out.println("Transfer complete.");
+        System.out.println("Transfer time(ms): " + transferTimeMs);
+        System.out.println("Retransmissions: " + retransmissions);
+        System.out.println("Timeout events: " + timeoutEvents);
+        System.out.println("Duplicate ACK events: " + duplicateAckEvents);
+        System.out.println("Duplicate REQUEST events: " + duplicateRequestEvents);
+        System.out.println("Approx throughput(B/s): " + String.format("%.2f", throughputBps));
+        System.out.println("Original file size(bytes): " + fileBytes);
+        System.out.println("Unique DATA segments: " + segmentCount);
+        System.out.println("Total DATA packets sent (including retransmissions): " + totalDataPacketsSent);
     }
 }
