@@ -37,6 +37,10 @@ public class Server {
         // payload size
         int payloadSize = 0;
 
+        int retransmissions = 0;
+        long startTime = 0;
+        long endTime = 0;
+
         // server runs until client sends quit
         while (true) {
             while (!sending) {
@@ -104,13 +108,18 @@ public class Server {
                 } 
 */              
                     
-                 if (recievedPacket.messageType.equals("ACK")) {
+if (recievedPacket.messageType.equals("ACK")) {
     if (recievedPacket.connectionID == connectionID &&
         recievedPacket.sequenceNumber == sequenceNumber) {
 
         System.out.println("Server recieved a valid ACK packet.");
 
         if (segmentToSend == lastSegement) {
+            // 最后一个 ACK 收到后
+            endTime = System.currentTimeMillis();
+            System.out.println("Transfer time(ms): " + (endTime - startTime));
+            System.out.println("Retransmissions: " + retransmissions);
+
             quiting = true;   // 最后一个 DATA 已被确认
             break;
         }
@@ -122,7 +131,8 @@ public class Server {
     } else {
         System.out.println("Server recieved an invalid ACK packet, resending last packet.");
     }
-}} 
+}
+                } 
                     catch (Exception e) {
                     // timeout
                     if (segmentToSend == lastSegement) {
@@ -130,6 +140,7 @@ public class Server {
                         quiting = true;
                     } else {
                         // else, resend last packet
+                        retransmissions++;
                         System.out.println("Server timed out, resending last packet.");
                     }
                 }
@@ -163,6 +174,11 @@ public class Server {
                 // create datagram
                 DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, ipAddress, 8081);
 
+                if (packet.messageType.equals("DATA") && segmentToSend == 0 && startTime == 0) {
+                    startTime = System.currentTimeMillis();
+                }
+
+                
                 // send datagram
                 socket.send(datagram);
                 if (packet.last == 0)
