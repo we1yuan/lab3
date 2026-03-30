@@ -40,6 +40,7 @@ public class Server {
         int retransmissions = 0;
         long startTime = 0;
         long endTime = 0;
+        long fileSize = 0;
 
         // server runs until client sends quit
         while (true) {
@@ -70,6 +71,7 @@ public class Server {
                             payloadSize = recievedPacket.payloadSize;
 
                             byte[] fileBytes = Files.readAllBytes(loadedFile.toPath());
+                            fileSize = fileBytes.length;
 
                             // splits file bytes according to payload size
                             int i = 0;
@@ -143,7 +145,7 @@ if (recievedPacket.messageType.equals("ACK")) {
                             System.out.println("Transfer time(ms): " + (endTime - startTime));
                             System.out.println("Retransmissions: " + retransmissions);
 
-        long fileSize = fileBytes.length;
+        
 
         if (transferTime > 0) {
             double throughput = (fileSize * 1000.0) / transferTime;   // Bytes/s
