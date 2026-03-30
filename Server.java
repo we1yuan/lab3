@@ -18,7 +18,7 @@ public class Server {
 
         // local ip address
 //       InetAddress ipAddress = InetAddress.getLocalHost();
-InetAddress clientAddress = null;
+InetAddress clientAddress = 10.0.0.1;
 int clientPort = 8080;
 
         // Server flags
