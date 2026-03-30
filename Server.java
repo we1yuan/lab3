@@ -117,9 +117,19 @@ if (recievedPacket.messageType.equals("ACK")) {
         if (segmentToSend == lastSegement) {
             // 最后一个 ACK 收到后
             endTime = System.currentTimeMillis();
-            System.out.println("Transfer time(ms): " + (endTime - startTime));
+            System.out.println("Transfer time(ms): " + (endTime - startTime) + "ms");
             System.out.println("Retransmissions: " + retransmissions);
 
+            double fileSize = fileBytes.length;
+
+        if (transferTime > 0) {
+            double throughput = (fileSize * 1000.0) / transferTime;   // Bytes/s
+            System.out.println("Throughput(Bytes/s): " + throughput);
+            System.out.println("Throughput(KB/s): " + (throughput / 1024.0));
+        } else {
+            System.out.println("Throughput(Bytes/s): 0");
+        }
+            
             quiting = true;   // 最后一个 DATA 已被确认
             break;
         }
