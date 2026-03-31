@@ -1,0 +1,78 @@
+0） For general run:
+ git clone https://github.com/we1yuan/lab3.git "your folder name lab3 defaut"
+ javac *.java
+Terminal 1：
+ java Server
+Terminal 2:
+ java Client
+
+1) creat network namespaces and veth (network namespaces):
+
+sudo ip netns add ns-server
+sudo ip netns add ns-client
+
+sudo ip link add veth-server type veth peer name veth-client
+
+sudo ip link set veth-server netns ns-server
+sudo ip link set veth-client netns ns-client
+
+sudo ip -n ns-server addr add 10.0.0.1/24 dev veth-server
+sudo ip -n ns-client addr add 10.0.0.2/24 dev veth-client
+
+sudo ip -n ns-server link set lo up
+sudo ip -n ns-client link set lo up
+sudo ip -n ns-server link set veth-server up
+sudo ip -n ns-client link set veth-client up
+
+ 2) standar case without delay or loss
+
+Terminal 1：
+sudo ip netns exec ns-server java Server
+
+
+Terminal 2：
+printf "10.0.0.1\n8080\ntest.txt\n128\n" | sudo ip netns exec ns-client java Client
+
+check result：
+cmp test.txt output.txt && echo "FILES MATCH"
+
+ 3)  Delay senario
+
+
+sudo ip netns exec ns-server tc qdisc add dev veth-server root netem delay 1000ms 20ms distribution normal
+sudo ip netns exec ns-client tc qdisc add dev veth-client root netem delay 1000ms 20ms distribution normal
+
+Terminal 1：
+sudo ip netns exec ns-server java Server
+
+Terminal 2：
+printf "10.0.0.1\n8080\ntest.txt\n128\n" | sudo ip netns exec ns-client java Client
+
+
+ 4)  Loss senario
+
+DELETE the delay qdisc:
+sudo ip netns exec ns-server tc qdisc del dev veth-server root
+sudo ip netns exec ns-client tc qdisc del dev veth-client root
+
+// 15% packet loss senario:
+sudo ip netns exec ns-server tc qdisc replace dev veth-server root netem loss random 15%
+sudo ip netns exec ns-client tc qdisc replace dev veth-client root netem loss random 15%
+
+
+Terminal 1：
+sudo ip netns exec ns-server java Server
+
+Terminal 2：
+printf "10.0.0.1\n8080\ntest.txt\n128\n" | sudo ip netns exec ns-client java Client
+
+ 
+ 5)
+
+DELETE all:
+
+sudo ip netns exec ns-server tc qdisc del dev veth-server root
+sudo ip netns exec ns-client tc qdisc del dev veth-client root
+
+sudo ip netns del ns-server
+sudo ip netns del ns-client
